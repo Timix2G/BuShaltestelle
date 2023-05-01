@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-void sort(int array[]){
+void sort(int *array){
     //einfaches bubblesort ohne beachtung der schon sortierten Elemente
     for (int i = 0; i < N_ELEMS; i++){
 
