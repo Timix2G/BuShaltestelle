@@ -23,6 +23,7 @@ bool isSorted(const int *array){
 }
 
 void printArray(const int *array){
+    
     //einfache Array-Ausgabe
     for (int i = 0; i < N_ELEMS; i++){
         printf("%d ", array[i]);
