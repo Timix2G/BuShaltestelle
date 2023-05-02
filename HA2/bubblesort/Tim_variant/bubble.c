@@ -6,7 +6,7 @@
 
 void sort(int *array){
     //einfaches bubblesort ohne beachtung der schon sortierten Elemente
-    for (int i = 0; i < N_ELEMS; i++){
+    for (int i = 0; i < N_ELEMS - 1; i++){
 
         if(array[i] > array[i + 1]){
             int temp = array[i];

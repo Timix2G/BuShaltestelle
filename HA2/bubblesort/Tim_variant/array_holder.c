@@ -1,3 +1,6 @@
+#define _XOPEN_SOURCE 700
+#define _POSIX_C_SOURCE 199309L
+
 #include "constants.h"
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -8,24 +11,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#define _XOPEN_SOURCE 700
-#define _POSIX_C_SOURCE 199309L
+
 
 
 bool isSorted(const int *array){
 
-    //auf Sortierung pruefen
     for(int i = 0; i < N_ELEMS - 1; i++){
         if(array[i] > array[i+1]){
             return false;
         }
     }
+    
     return true;
 }
 
 void printArray(const int *array){
     
-    //einfache Array-Ausgabe
     for (int i = 0; i < N_ELEMS; i++){
         printf("%d ", array[i]);
     }
@@ -34,30 +35,28 @@ void printArray(const int *array){
 }
 
 int main(){
-    //shared-memory oeffnen und auf NUMBERS vergroessern
+    //shared-memory oeffnen
     int shm_fd = shm_open(MEM_NAME, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  
+    //shm auf die groesse von NUMBERS zuschneiden
     ftruncate(shm_fd, sizeof(NUMBERS));
     
-    //das Array auf das shared-memory laden
+    //das Array auf shm laden
     int* shared_array = mmap(NULL, sizeof(NUMBERS), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     memcpy(shared_array, NUMBERS, sizeof(NUMBERS));
-
-    pid_t pidBuffer = getpid();
-    char const* args[] = {"./bubble", MEM_NAME, NULL};
     
     int count = 1;
-    //auf sortierung pruefen
+
     while(!isSorted(shared_array)){
 
-        nanosleep((const struct timespec[]){{0, 500000000L}, NULL});
-        printf("Iteration %d: ", count++);
-        printArray(shared_array);
+        //pruefe alle 500.000.000 ns (0.5 Sekunden)
+        nanosleep((const struct timespec[]){{0, 500000000L}}, NULL);
+
+        printf("Check %d: ", count++); printArray(shared_array);
     }
     
-    //fertig
-    printf("Process finished: \n");
-    printArray(shared_array);
+    printf("Process finished.");
 
-    //Verbindungen schließen
-    close(shm_fd); shm_unlink(MEM_NAME); return 0;
+    //Shm verbindung und fd schliessen
+    shm_unlink(MEM_NAME); close(shm_fd); return 0;
 }
