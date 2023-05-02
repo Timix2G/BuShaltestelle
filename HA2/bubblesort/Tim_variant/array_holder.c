@@ -7,8 +7,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/wait.h>
-#define _XOPEN_SOURCE 700 
+#include <time.h>
+#define _XOPEN_SOURCE 700
+#define _POSIX_C_SOURCE 199309L
 
 
 bool isSorted(const int *array){
@@ -47,14 +48,8 @@ int main(){
     int count = 1;
     //auf sortierung pruefen
     while(!isSorted(shared_array)){
-        //Kindprozess erzeugen (hoffentlich)
-        
-        int res = posix_spawn(&pidBuffer, *args, NULL, NULL, (char*const*)args, NULL);
-        if(res != 0){
-            perror("posix failed");
-        }
 
-        waitpid(0, NULL, 0);
+        nanosleep((const struct timespec[]){{0, 500000000L}, NULL});
         printf("Iteration %d: ", count++);
         printArray(shared_array);
     }
