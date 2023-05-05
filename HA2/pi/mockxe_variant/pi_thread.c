@@ -8,7 +8,7 @@
 typedef struct thread_data {
     int n; // completed iterations
     int m; // total iterations
-    int k; // points inside quarter cicle
+    int k; // points inside quarter circle
     bool done; // thread done
 } thread_data;
 
