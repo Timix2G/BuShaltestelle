@@ -91,7 +91,6 @@ int main(void) {
 
             if (!tdatas[i].done) {
                 all_done = false;
-                break;
             }
         }
 
