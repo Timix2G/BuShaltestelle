@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 
 typedef struct thread_data {
@@ -12,7 +11,6 @@ typedef struct thread_data {
     int n; // completed iterations
     int m; // total iterations
     int k; // points inside quarter circle
-    bool done; // thread done
 } thread_data;
 
 
@@ -62,7 +60,6 @@ int main(void) {
     int e = n % t; // calculate remaining (extra) iterations
 
     for (int i = 0; i < t; ++i) {
-        tdatas[i].done = false;
         tdatas[i].seed = rand(); // create pseudo random seed
         tdatas[i].k = 0;
         tdatas[i].n = 0;
@@ -77,11 +74,11 @@ int main(void) {
         }
     }
 
-    bool all_done;
+    int threads_done;
     do {
         sleep(1);
 
-        all_done = true;
+        threads_done = 0;
         int t_k = 0;
         int t_n = 0;
 
@@ -89,15 +86,14 @@ int main(void) {
             t_k += tdatas[i].k;
             t_n += tdatas[i].n;
 
-            if (!tdatas[i].done) {
-                all_done = false;
-            }
+            if (tdatas[i].n == tdatas[i].m)
+                threads_done++;
         }
 
         double a = 4 * (double) t_k / t_n;
 
         printf("pi approximation: %f\n", a);
 
-    } while (!all_done);
+    } while (threads_done < t);
 
 }
