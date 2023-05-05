@@ -64,7 +64,7 @@ int main(void) {
         tdatas[i].n = 0;
         tdatas[i].m = m; // set iterations for thread
         if (i < e) // if first e threads...
-            tdatas[i].n ++; // ...assign one extra iteration
+            tdatas[i].m++; // ...assign one extra iteration
 
         int ret = pthread_create(&tids[i], NULL, &thread_function, (void *) &tdatas[i]);
         if (ret != 0) {
