@@ -29,7 +29,6 @@ void* thread_function(void *arg) {
         tdata->n++;
     }
 
-    tdata->done = 1;
     return NULL;
 }
 
@@ -92,7 +91,11 @@ int main(void) {
 
         double a = 4 * (double) t_k / t_n;
 
-        printf("pi approximation: %f\n", a);
+         printf("threads finished: %d/%d\t"
+               "current iterations (n): %d\t"
+               "current points inside quarter circle (k): %d\t"
+               "pi approximation: %f\n",
+               threads_done, t, t_n, t_k, a);
 
     } while (threads_done < t);
 
