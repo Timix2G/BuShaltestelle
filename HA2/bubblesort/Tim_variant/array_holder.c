@@ -12,7 +12,7 @@
 #include <string.h>
 #include <time.h>
 
-
+const size_t MEM_SIZE = (size_t) N_ELEMS * sizeof(int);
 
 bool isSorted(const int *array){
 
@@ -39,11 +39,11 @@ int main(){
     int shm_fd = shm_open(MEM_NAME, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
   
     //shm auf die groesse von NUMBERS zuschneiden
-    ftruncate(shm_fd, sizeof(NUMBERS));
+    ftruncate(shm_fd, MEM_SIZE);
     
     //das Array auf shm laden
-    int* shared_array = mmap(NULL, sizeof(NUMBERS), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    memcpy(shared_array, NUMBERS, sizeof(NUMBERS));
+    int* shared_array = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    memcpy(shared_array, NUMBERS, MEM_SIZE);
     
     int count = 1;
 
