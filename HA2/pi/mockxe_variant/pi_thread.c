@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199506L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -6,6 +8,7 @@
 
 
 typedef struct thread_data {
+    unsigned int seed; // seed for rand_r()
     int n; // completed iterations
     int m; // total iterations
     int k; // points inside quarter circle
@@ -19,8 +22,8 @@ void* thread_function(void *arg) {
     double y;
 
     for (int i = 0; i < tdata->m; ++i) {
-        x = (double) rand() / RAND_MAX;
-        y = (double) rand() / RAND_MAX;
+        x = (double) rand_r(&tdata->seed) / RAND_MAX;
+        y = (double) rand_r(&tdata->seed) / RAND_MAX;
 
         if (x*x + y*y <= 1)
             tdata->k++;
@@ -60,6 +63,7 @@ int main(void) {
 
     for (int i = 0; i < t; ++i) {
         tdatas[i].done = false;
+        tdatas[i].seed = rand(); // create pseudo random seed
         tdatas[i].k = 0;
         tdatas[i].n = 0;
         tdatas[i].m = m; // set iterations for thread
