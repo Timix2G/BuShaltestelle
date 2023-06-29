@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  gai = getaddrinfo(domain, "80", &hints, &result);
+  gai = getaddrinfo(domain, PORT, &hints, &result);
   if(gai != 0){
     printf("fehler bei getaddrinfo");
     exit(0);
@@ -40,12 +40,53 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  connect(sockfd, result->ai_addr, result->ai_addrlen);
+  /*set socket buffer sizes
+    int sendBufferSize = SEND_BUFFER_SIZE;
+    int recvBufferSize = RECV_BUFFER_SIZE;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &sendBufferSize, sizeof(sendBufferSize)) < 0) {
+        perror("error setting send buffer size"); // prints error set in errno
+        freeaddrinfo(result);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, sizeof(recvBufferSize)) < 0) {
+        perror("error setting receive buffer size"); // prints error set in errno
+        freeaddrinfo(result);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+  */
+
+  if (connect(sockfd, result->ai_addr, result->ai_addrlen) != 0) {
+        perror("error establishing connection"); // prints error set in errno
+        freeaddrinfo(result);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
   printf("%s", httpstr);
-  write(sockfd, httpstr, sizeof(httpstr));
-  read(sockfd, resStr, sizeof(resStr));
+
+  if (write(sockfd, httpstr, strlen(httpstr)) < 0) {
+        perror("error writing request"); // prints error set in errno
+        freeaddrinfo(result);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    free(httpstr);
+
+  ssize_t bytes_received = read(sockfd, resStr, sizeof(resStr) -1); // read response
+
+    if (bytes_received < 0) {
+        perror("error reading response"); // prints error set in errno
+        freeaddrinfo(result);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    resStr[bytes_received] = 0; // set null terminator as last character
   printf("%s", *resStr);
   freeaddrinfo(result);
-  free(httpstr);
+  close(sockfd);
   return 0;
 } 
