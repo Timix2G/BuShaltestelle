@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   char *domain = argv[1];
   char *path = argv[2];
   char *httpstr = (char*)malloc(SEND_BUFFER_SIZE * sizeof(char));
-  char *resStr[RECV_BUFFER_SIZE];
+  char resStr[RECV_BUFFER_SIZE];
   struct addrinfo hints, *result;
   int gai, sockfd;
 
@@ -29,34 +29,17 @@ int main(int argc, char* argv[]) {
   hints.ai_socktype = SOCK_STREAM;
 
   gai = getaddrinfo(domain, PORT, &hints, &result);
-  if(gai != 0){
-    printf("fehler bei getaddrinfo");
-    exit(0);
-  }
+  if (gai < 0) {
+        fprintf(stderr, "error getting address info: %s\n", gai_strerror(gai)); // no errno here :(
+        exit(EXIT_FAILURE);
+    }
 
   sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-  if(sockfd == -1){
-    printf("fehler bei Socket erstellung");
-    exit(0);
+  if (sockfd < 0) {
+        perror("error creating socket"); // prints error set in errno
+        freeaddrinfo(result);
+        exit(EXIT_FAILURE);
   }
-
-  /*set socket buffer sizes
-    int sendBufferSize = SEND_BUFFER_SIZE;
-    int recvBufferSize = RECV_BUFFER_SIZE;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &sendBufferSize, sizeof(sendBufferSize)) < 0) {
-        perror("error setting send buffer size"); // prints error set in errno
-        freeaddrinfo(result);
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, sizeof(recvBufferSize)) < 0) {
-        perror("error setting receive buffer size"); // prints error set in errno
-        freeaddrinfo(result);
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-  */
 
   if (connect(sockfd, result->ai_addr, result->ai_addrlen) != 0) {
         perror("error establishing connection"); // prints error set in errno
@@ -64,8 +47,7 @@ int main(int argc, char* argv[]) {
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-
-  printf("%s", httpstr);
+  printf("Request: \n%s", httpstr);
 
   if (write(sockfd, httpstr, strlen(httpstr)) < 0) {
         perror("error writing request"); // prints error set in errno
@@ -73,20 +55,24 @@ int main(int argc, char* argv[]) {
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-    free(httpstr);
+  free(httpstr);
 
-  ssize_t bytes_received = read(sockfd, resStr, sizeof(resStr) -1); // read response
-
-    if (bytes_received < 0) {
+  if (read(sockfd, resStr, sizeof(resStr) -1) < 0) {
         perror("error reading response"); // prints error set in errno
         freeaddrinfo(result);
         close(sockfd);
         exit(EXIT_FAILURE);
-    }
-
-    resStr[bytes_received] = 0; // set null terminator as last character
-  printf("%s", *resStr);
+  }
+  printf("Response: \n%s", resStr);
   freeaddrinfo(result);
   close(sockfd);
+
+  FILE *fptr = fopen("./build/test.html", "w");
+  if (fputs(resStr, fptr) < 0) {
+        perror("error writing to file"); // prints error set in errno
+        fclose(fptr);
+        exit(EXIT_FAILURE);
+  }
+  fclose(fptr);
   return 0;
 } 
