@@ -26,15 +26,72 @@ void signal_handler(int signalNum) {
 int main() {
   signal(SIGINT, signal_handler);
 
-  // TODO
+  struct sockaddr_storage their_addr;
+  socklen_t addr_size;
+  struct addrinfo hints, *res;
+  int gai, sockfd, new_fd;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+
+  gai = getaddrinfo(NULL, PORT, &hints, &res);
+  if (gai < 0) {
+        fprintf(stderr, "error getting address info: %s\n", gai_strerror(gai)); // no errno here :(
+        exit(EXIT_FAILURE);
+    }
+
+  sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  if (sockfd < 0) {
+        perror("error creating socket"); // prints error set in errno
+        freeaddrinfo(res);
+        exit(EXIT_FAILURE);
+  }
+
+  if (bind(sockfd, res->ai_addr, res->ai_addrlen) != 0) {
+        perror("error establishing connection"); // prints error set in errno
+        freeaddrinfo(res);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+  if(listen(sockfd, BACKLOG)) {
+        perror("error listening"); // prints error set in errno
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
   
   while (!shouldEnd) {
+    addr_size = sizeof(their_addr);
+    new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
+    if (new_fd < 0) {
+            perror("error accepting connection");
+            continue;
+    }
+
+    char req[BUFFER_SIZE];
+    if (read(new_fd, req, sizeof(req)) < 0) {
+            perror("error reading request"); // prints error set in errno
+            close(new_fd);
+            continue;
+    }
+
+    printf("Received: \n%s", req);
     
-    // TODO
-    
+    if (write(new_fd, RESPONSE, sizeof(RESPONSE)) < 0) {
+            perror("error writing response"); // prints error set in errno
+            close(new_fd);
+            continue;
+    }
+
+    printf("Wrote Response: \n%s", RESPONSE);
+
+    close(new_fd);
   }
   
-  // TODO
+  freeaddrinfo(res);
+  close(sockfd);
 
   return 0;
 }
